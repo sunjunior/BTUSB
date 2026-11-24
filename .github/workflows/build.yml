@@ -49,8 +49,8 @@ jobs:
       - name: Build hcitool / hciconfig (static aarch64)
         run: |
           cd bluez-5.55
-          aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -I. -Ilib -o hcitool tools/hcitool.c lib/bluetooth.c
-          aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -I. -Ilib -o hciconfig tools/hciconfig.c lib/bluetooth.c
+          aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -DVERSION=\"5.55\" -I. -Ilib -o hcitool tools/hcitool.c lib/bluetooth.c
+          aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -DVERSION=\"5.55\" -I. -Ilib -o hciconfig tools/hciconfig.c lib/bluetooth.c
           ls -l hcitool hciconfig
           aarch64-linux-gnu-readelf -h hcitool | grep -E 'Class|Machine'
 
