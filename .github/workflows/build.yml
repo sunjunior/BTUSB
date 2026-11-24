@@ -8,10 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        variant: [ default, relcrc ]
     steps:
       - uses: actions/checkout@v4
 
@@ -24,18 +20,14 @@ jobs:
         run: |
           curl -sSLo linux.tar.xz https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.9.170.tar.xz
           tar xf linux.tar.xz
-          echo "tree ok: $(ls linux-4.9.170/Makefile)"
 
       - name: Configure with vendor config
         run: |
           cd linux-4.9.170
           cp ../config.txt .config
-          if [ "${{ matrix.variant }}" = "relcrc" ]; then
-            echo "CONFIG_MODULE_REL_CRCS=y" >> .config
-          fi
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
           echo "--- key options ---"
-          grep -E 'CONFIG_(BT_HCIBTUSB|MODVERSIONS|MODULE_REL_CRCS|MODULE_SIG|SMP|PREEMPT|MODULE_UNLOAD|LOCALVERSION)=' .config || true
+          grep -E 'CONFIG_(BT_HCIBTUSB|MODVERSIONS|MODULE_SIG|SMP|PREEMPT|MODULE_UNLOAD|LOCALVERSION)=' .config || true
 
       - name: modules_prepare
         run: |
@@ -56,12 +48,10 @@ jobs:
           for f in drivers/bluetooth/*.ko; do
             echo "== $f"
             strings "$f" | grep -m1 'vermagic' || true
-            aarch64-linux-gnu-readelf -h "$f" | grep -E 'Class|Machine'
-            aarch64-linux-gnu-objdump -h "$f" | grep -E '__versions|__ksymtab|modinfo' || true
           done
 
       - uses: actions/upload-artifact@v4
         with:
-          name: btusb-${{ matrix.variant }}
+          name: btusb-ko
           path: linux-4.9.170/drivers/bluetooth/*.ko
           if-no-files-found: error
