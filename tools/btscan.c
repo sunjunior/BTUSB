@@ -11,9 +11,37 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
+#include <linux/rfkill.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
+
+/* 把蓝牙 rfkill 全部解开（厂商的 sunxi-bt 默认 soft=1） */
+static void unblock_bt_rfkill(void)
+{
+    int fd = open("/dev/rfkill", O_RDWR | O_NONBLOCK);
+    if (fd < 0) { perror("open /dev/rfkill"); return; }
+    struct rfkill_event ev;
+    int n;
+    while ((n = read(fd, &ev, sizeof(ev))) == sizeof(ev)) {
+        printf("rfkill idx=%d type=%d soft=%d hard=%d\n", ev.idx, ev.type, ev.soft, ev.hard);
+        if (ev.type == RFKILL_TYPE_BLUETOOTH && (ev.soft || ev.hard)) {
+            struct rfkill_event w;
+            memset(&w, 0, sizeof(w));
+            w.idx = ev.idx;
+            w.type = ev.type;
+            w.op = RFKILL_OP_CHANGE;
+            w.soft = 0;
+            w.hard = 0;
+            if (write(fd, &w, sizeof(w)) == sizeof(w))
+                printf("  -> unblocked idx=%d\n", ev.idx);
+            else
+                perror("  rfkill write");
+        }
+    }
+    close(fd);
+}
 
 static int send_cmd(int fd, uint16_t opcode, const unsigned char *params, int plen)
 {
@@ -48,6 +76,8 @@ int main(int argc, char **argv)
 {
     int dev = (argc > 1) ? atoi(argv[1]) : 0;
     int secs = (argc > 2) ? atoi(argv[2]) : 12;
+
+    unblock_bt_rfkill();
 
     int fd = socket(AF_BLUETOOTH, SOCK_RAW | SOCK_CLOEXEC, BTPROTO_HCI);
     if (fd < 0) { perror("socket"); return 1; }
