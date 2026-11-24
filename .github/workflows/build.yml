@@ -41,17 +41,28 @@ jobs:
           cd linux-4.9.170
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- HOSTCFLAGS="-O2 -fcommon" M=drivers/bluetooth modules -j$(nproc)
 
-      - name: Inspect
+      - name: Fetch bluez tools
         run: |
-          cd linux-4.9.170
-          ls -l drivers/bluetooth/*.ko
-          for f in drivers/bluetooth/*.ko; do
-            echo "== $f"
-            strings "$f" | grep -m1 'vermagic' || true
-          done
+          curl -sSLo bluez.tar.xz https://mirrors.edge.kernel.org/pub/linux/bluetooth/bluez-5.55.tar.xz
+          tar xf bluez.tar.xz
+
+      - name: Build hcitool / hciconfig (static aarch64)
+        run: |
+          cd bluez-5.55
+          aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -I. -Ilib -o hcitool tools/hcitool.c lib/bluetooth.c
+          aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -I. -Ilib -o hciconfig tools/hciconfig.c lib/bluetooth.c
+          ls -l hcitool hciconfig
+          aarch64-linux-gnu-readelf -h hcitool | grep -E 'Class|Machine'
+
+      - name: Collect
+        run: |
+          mkdir -p out
+          cp linux-4.9.170/drivers/bluetooth/*.ko out/
+          cp bluez-5.55/hcitool bluez-5.55/hciconfig out/
+          ls -l out
 
       - uses: actions/upload-artifact@v4
         with:
           name: btusb-ko
-          path: linux-4.9.170/drivers/bluetooth/*.ko
+          path: out/*
           if-no-files-found: error
