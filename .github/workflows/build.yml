@@ -56,14 +56,15 @@ jobs:
           EOF
           aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -DVERSION='"5.55"' -I. -Ilib -o hcitool tools/hcitool.c lib/bluetooth.c lib/hci.c shim.c
           aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -DVERSION='"5.55"' -I. -Ilib -o hciconfig tools/hciconfig.c tools/csr.c lib/bluetooth.c lib/hci.c shim.c
-          ls -l hcitool hciconfig
+          aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -I. -Ilib -o btscan ../tools/btscan.c
+          ls -l hcitool hciconfig btscan
           aarch64-linux-gnu-readelf -h hcitool | grep -E 'Class|Machine'
 
       - name: Collect
         run: |
           mkdir -p out
           cp linux-4.9.170/drivers/bluetooth/*.ko out/
-          cp bluez-5.55/hcitool bluez-5.55/hciconfig out/
+          cp bluez-5.55/hcitool bluez-5.55/hciconfig bluez-5.55/btscan out/
           ls -l out
 
       - uses: actions/upload-artifact@v4
