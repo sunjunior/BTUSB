@@ -56,6 +56,7 @@ jobs:
           EOF
           aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -DVERSION='"5.55"' -I. -Ilib -o hcitool tools/hcitool.c lib/bluetooth.c lib/hci.c shim.c
           aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -DVERSION='"5.55"' -I. -Ilib -o hciconfig tools/hciconfig.c tools/csr.c lib/bluetooth.c lib/hci.c shim.c
+          ln -sfn lib bluetooth
           aarch64-linux-gnu-gcc -static -O2 -D_GNU_SOURCE -I. -Ilib -o btscan ../tools/btscan.c
           ls -l hcitool hciconfig btscan
           aarch64-linux-gnu-readelf -h hcitool | grep -E 'Class|Machine'
