@@ -40,14 +40,14 @@ jobs:
       - name: modules_prepare
         run: |
           cd linux-4.9.170
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare -j$(nproc)
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- HOSTCFLAGS="-O2 -fcommon" modules_prepare -j$(nproc)
           cp ../Module.symvers .
           echo "symvers lines: $(wc -l < Module.symvers)"
 
       - name: Build btusb
         run: |
           cd linux-4.9.170
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=drivers/bluetooth modules -j$(nproc)
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- HOSTCFLAGS="-O2 -fcommon" M=drivers/bluetooth modules -j$(nproc)
 
       - name: Inspect
         run: |
